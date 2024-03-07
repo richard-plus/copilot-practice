@@ -1,0 +1,204 @@
+<!-- 基本 HTML 框架 -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My First Webpage</title>
+    <!-- 匯入 leaflet/leaflet.js -->
+    <script src="leaflet/leaflet.js"></script>
+    <!-- 匯入 leaflet/leaflet.css -->
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+</head>
+<body>
+<!-- 產生地圖容器, 並設定寬度為 1400px, 高度為 750px -->
+<div id="map" style="width: 1400px; height: 750px"></div>
+<script>
+    // 產生地圖, 並設定中心點為台灣, 縮放等級為 5
+    var map = L.map('map').setView([23.5, 121], 5);
+    // 加入地圖圖層, 圖層為 openstreetmap 圖層, 並設定最大縮放等級為 19
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
+    // 關閉地圖滑鼠左鍵 double click 時的預設行為
+    map.doubleClickZoom.disable();
+    // 產生海面船隻圖層
+    var shipLayer = L.layerGroup().addTo(map);
+    // 產生船隻資料 - 航行於台灣海峽上，資料有：船隻編號、航行GPS 型軌跡。二筆資料，其軌跡不同
+    var ships = {
+        'ship1': [
+            [24.5, 121],
+            [24.6, 121.1],
+            [24.7, 121.2],
+            [24.8, 121.3],
+            [24.9, 121.4],
+            [25, 121.5],
+            [25.1, 121.6],
+            [25.2, 121.7],
+            [25.3, 121.8],
+            [25.4, 121.9],
+            [25.5, 122],
+            [25.6, 122.1],
+            [25.7, 122.2],
+            [25.8, 122.3],
+            [25.9, 122.4],
+            [26, 122.5],
+            [26.1, 122.6],
+            [26.2, 122.7],
+            [26.3, 122.8],
+            [26.4, 122.9],
+            [26.5, 123],
+            [26.6, 123.1],
+            [26.7, 123.2],
+            [26.8, 123.3],
+            [26.9, 123.4],
+            [27, 123.5],
+            [27.1, 123.6],
+            [27.2, 123.7],
+            [27.3, 123.8],
+            [27.4, 123.9],
+            [27.5, 124],
+            [27.6, 124.1],
+            [27.7, 124.2],
+            [27.8, 124.3],
+            [27.9, 124.4],
+            [28, 124.5],
+            [28.1, 124.6],
+            [28.2, 124.7],
+            [28.3, 124.8],
+            [28.4, 124.9],
+            [28.5, 125],
+            [28.6, 125.1],
+            [28.7, 125.2],
+            [28.8, 125.3],
+            [28.9, 125.4],
+            [29, 125.5]
+        ],
+        'ship2': [
+            [24.5, 121],
+            [24.6, 121.1],
+            [24.7, 121.2],
+            [24.8, 121.3],
+            [24.9, 121.4],
+            [25, 121.5],
+            [25.1, 121.6],
+            [25.2, 121.7],
+            [25.3, 121.8],
+            [25.4, 121.9],
+            [25.5, 122],
+            [25.6, 122.1],
+            [25.7, 122.2],
+            [25.8, 122.3],
+            [25.9, 122.4],
+            [26, 122.5],
+            [26.1, 122.6],
+            [26.2, 122.7],
+            [26.3, 122.8],
+            [26.4, 122.9],
+            [26.5, 123],
+            [26.6, 123.1],
+            [26.7, 123.2],
+            [26.8, 123.3],
+            [26.9, 123.4],
+            [27, 123.5],
+            [27.1, 123.6],
+            [27.2, 123.7],
+            [27.3, 123.8],
+            [27.4, 123.9],
+            [27.5, 124],
+            [27.6, 124.1],
+            [27.7, 124.2],
+            [27.8, 124.3],
+            [27.9, 124.4],
+            [28, 124.5],
+            [28.1, 124.6],
+            [28.2, 124.7],
+            [28.3, 124.8],
+            [28.4, 124.9],
+            [28.5, 125],
+            [28.6, 125.1],
+            [28.7, 125.2],
+            [28.8, 125.3],
+            [28.9, 125.4],
+            [29, 125.5]
+        ]
+    };
+
+    let polyline = undefined;
+    // 將船隻資料加入地圖，軌跡線為虛線、藍色。線條最前面加入圖示，顯示船隻名稱。船隻圖示以：leaflet/images/board.png 顯示
+    for (const ship in ships) {
+        polyline = L.polyline(ships[ship], {color: 'blue', dashArray: '10, 5'}).addTo(shipLayer);
+        L.marker(ships[ship][0], {
+            icon: L.icon({
+                iconUrl: 'leaflet/images/board.png',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            }), title: ship
+        }).addTo(shipLayer);
+    }
+
+    var offset = 0;
+
+    if (polyline) {
+        setInterval(() => {
+            offset++;
+            polyline.setStyle({
+                dashOffset: -offset
+            });
+        }, 100);
+    }
+
+    // 鈴聽滑鼠左鍵事件，當double click 時則將滑鼠軌跡產生線條，並於第二次 double click 時，計算兩點的距離顯示於地圖上.
+    // 並於第二次 double click 前，顯示兩點連線於地圖上
+    // 顯示為：距離：___ 公尺
+    var mouseTrack = [];
+    var mouseTrackLayer = L.layerGroup().addTo(map);
+    var distance = 0;
+    var distanceLine = undefined;
+    var distanceText = undefined;
+
+    map.on('dblclick', function (e) {
+        if (mouseTrack.length == 0) {
+            map.on('mousemove', function (e) {
+                mouseTrack.push(e.latlng);
+                L.polyline(mouseTrack, {color: 'red'}).addTo(mouseTrackLayer);
+            });
+        } else {
+            mouseTrack.push(e.latlng);
+        }
+
+        // L.polyline(mouseTrack, {color: 'red'}).addTo(mouseTrackLayer);
+        if (mouseTrack.length > 1) {
+            if (distanceLine) {
+                distanceLine.remove();
+            }
+            if (distanceText) {
+                distanceText.remove();
+            }
+            distanceLine = L.polyline(mouseTrack, {color: 'red'}).addTo(mouseTrackLayer);
+
+            // 將陣列 mouseTract 第 N 個元素與 N +1 個元素計算距離並加總
+            // 使用 javascript reduce 方法
+            distance = mouseTrack.reduce((totalDistance, currentPoint, idx, arr) => {
+                if (idx < arr.length - 1) {
+                    return totalDistance + currentPoint.distanceTo(arr[idx + 1]);
+                } else {
+                    return totalDistance;
+                }
+            }, 0);
+
+            distanceText = L.marker(mouseTrack[mouseTrack.length - 1], {
+                icon: L.divIcon({
+                    html: `距離：${Math.round(distance.toFixed(2) / 1000)} 公里`,
+                    iconSize: [100, 20]
+                })
+            }).addTo(mouseTrackLayer);
+
+            map.off('mousemove');
+
+            mouseTrack = [];
+            distance = 0;
+            distanceLine = undefined;
+            distanceText = undefined;
+        }
+    });
+</script>
+
+</body>
+</html>
